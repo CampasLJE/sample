@@ -1,19 +1,19 @@
-#syntax=docker/dockerfile:1
+# Usamos una imagen oficial de Node.js ligera
+FROM node:20-alpine
 
-# builder installs dependencies and builds the node app
-FROM node:lts-alpine AS builder
-WORKDIR /src
-RUN --mount=src=package.json,target=package.json \
-    --mount=src=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci
-COPY . .
-RUN --mount=type=cache,target=/root/.npm \
-    npm run build
-
-# release creates the runtime image
-FROM node:lts-alpine AS release
 WORKDIR /app
-COPY --from=builder /src/build .
-EXPOSE 3000
-CMD ["node", "."]
+
+# Copiamos los archivos de configuración de dependencias
+COPY package*.json ./
+
+# Instalamos las dependencias del proyecto
+RUN npm ci
+
+# Copiamos el resto del código fuente de la app
+COPY . .
+
+# Ejecutamos la comprobación de compilación de la aplicación (Vite/Svelte)
+RUN npm run build
+
+# Comando por defecto obligatorio
+CMD ["npm", "run", "preview"]

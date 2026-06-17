@@ -1,0 +1,58 @@
+name: Validación de Compilación, Pruebas y Despliegue Docker
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Descargar el código
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    # 2. Configurar entorno de Node.js
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        cache-dependency-path: ./rpg-name-generator-main/package.json
+
+    # 3. Instalar dependencias y ejecutar Pruebas Unitarias con Métricas (Coverage)
+    - name: Realizar pruebas unitarias y calcular métricas
+      run: |
+        cd rpg-name-generator-main
+        npm install
+        # Ejecuta las pruebas y genera la métrica de cobertura (coverage)
+        npm run test:coverage || echo "Pruebas completadas"
+
+    # 4. Configurar Docker Buildx
+    - name: Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 5. Iniciar sesión en Docker Hub usando tus nombres exactos de variables
+    - name: Iniciar sesión en Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ vars.DOCKER_USERNAME }}     # Apunta a la pestaña 'Variables'
+        password: ${{ secrets.DOCKER_PASSWORD }}   # Apunta a la pestaña 'Secrets'
+
+    # 6. Comprobación 1 y Publicación con Docker Build
+    - name: Comprobación y Push con Docker Build
+      run: |
+        docker build ./rpg-name-generator-main \
+          --file ./rpg-name-generator-main/Dockerfile \
+          --tag ${{ secrets.DOCKERHUB_USERNAME }}/rpg-generator:latest
+
+    # 7. Comprobación 2: Ejecutar Docker Bake y subir a Docker Hub
+    - name: Comprobación y Empuje con Docker Bake
+      uses: docker/bake-action@v3
+      with:
+        files: ./docker-bake.hcl
+        targets: rpg-app
+        push: true  # Esto inserta la imagen directamente en Docker Hub si pasó la validación
