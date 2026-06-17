@@ -49,9 +49,9 @@ jobs:
           --file ./rpg-name-generator-main/Dockerfile \
           --tag jesuse312/rpg-generator:latest
           
-    # 7. Comprobación 2: Ejecutar Docker Bake usando el archivo HCL y subir de forma definitiva a Docker Hub
+    # 7. Comprobación 2: Ejecutar Docker Bake usando la versión v6 para corregir compatibilidades e insertar en Docker Hub
     - name: Comprobación y Empuje con Docker Bake
-      uses: docker/bake-action@v3
+      uses: docker/bake-action@v6                  # Actualizado a @v6 para corregir el error de buildx
       with:
         files: ./docker-bake.hcl
         targets: rpg-app
