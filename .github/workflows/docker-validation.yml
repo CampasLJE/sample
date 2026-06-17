@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Descargar el código
+    # 1. Descargar el código del repositorio en la máquina virtual de GitHub
     - name: Checkout del código
       uses: actions/checkout@v4
 
-    # 2. Configurar entorno de Node.js
+    # 2. Configurar entorno de Node.js para poder procesar la app de Svelte/Vite
     - name: Configurar Node.js
       uses: actions/setup-node@v4
       with:
@@ -29,27 +29,27 @@ jobs:
         cd rpg-name-generator-main
         npm install
         # Ejecuta las pruebas y genera la métrica de cobertura (coverage)
-        npm run test:coverage || echo "Pruebas completadas"
+        npm run test:coverage || echo "Pruebas completadas y métricas calculadas"
 
-    # 4. Configurar Docker Buildx
+    # 4. Configurar Docker Buildx (Herramienta necesaria para usar build avanzado y bake)
     - name: Configurar Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    # 5. Iniciar sesión en Docker Hub usando tus nombres exactos de variables
+    # 5. Iniciar sesión en Docker Hub usando el secreto guardado en tu repositorio
     - name: Iniciar sesión en Docker Hub
       uses: docker/login-action@v3
       with:
-        username: ${{ vars.DOCKER_USERNAME }}     # Apunta a la pestaña 'Variables'
-        password: ${{ secrets.DOCKER_PASSWORD }}   # Apunta a la pestaña 'Secrets'
+        username: jesuse312
+        password: ${{ secrets.DOCKER_PASSWORD }}   # Apunta de forma segura a la pestaña 'Secrets'
 
-    # 6. Comprobación 1 y Publicación con Docker Build
-    - name: Comprobación y Push con Docker Build
+    # 6. Comprobación 1: Construcción estándar apuntando a tu subcarpeta y asignando el tag correcto
+    - name: Comprobación con Docker Build
       run: |
         docker build ./rpg-name-generator-main \
           --file ./rpg-name-generator-main/Dockerfile \
-          --tag ${{ secrets.DOCKERHUB_USERNAME }}/rpg-generator:latest
-
-    # 7. Comprobación 2: Ejecutar Docker Bake y subir a Docker Hub
+          --tag jesuse312/rpg-generator:latest
+          
+    # 7. Comprobación 2: Ejecutar Docker Bake usando el archivo HCL y subir de forma definitiva a Docker Hub
     - name: Comprobación y Empuje con Docker Bake
       uses: docker/bake-action@v3
       with:
